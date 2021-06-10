@@ -1,0 +1,45 @@
+SHELL = /bin/sh
+CFLAGS = -g -Wall -pedantic -std=c99 @SYSTEM_CFLAGS@
+LDFLAGS = @SYSTEM_LDFLAGS@
+
+prefix = @prefix@
+exec_prefix = $(prefix)
+bindir = $(exec_prefix)/bin
+libdir = $(exec_prefix)/lib
+datarootdir = $(prefix)/share
+mandir = $(datarootdir)/man
+includedir = $(prefix)/include
+
+INSTALL ?= install
+INSTALLFLAGS ?= -D
+
+SRCS=ivjson.c
+LIB=ivjson.a
+MAN=ivjson.3
+
+OBJS=$(SRCS:.c=.o)
+
+all: $(LIB)
+
+$(LIB): $(OBJS)
+	ar r $(LIB) $(OBJS)
+
+.c.o:
+	$(CC) $(CFLAGS) -c $<
+
+clean:
+	rm -f $(OBJS) $(LIB)
+
+install: $(PROG)
+	$(INSTALL) $(INSTALLFLAGS) $(LIB) $(DESTDIR)$(libdir)/$(LIB)
+	$(INSTALL) $(INSTALLFLAGS) -m 444 $(MAN) \
+		$(DESTDIR)$(mandir)/man3/$(MAN)
+	$(INSTALL) $(INSTALLFLAGS) -m 444 ivjson.h \
+		$(DESTDIR)$(includedir)/
+
+uninstall:
+	rm -f $(DESTDIR)$(libdir)/$(LIB)
+	rm -f $(DESTDIR)$(mandirdir)/man3/$(MAN)
+	rm -f $(DESTDIR)$(includedir)/ivjson.h
+
+ivjson.o: ivjson.c ivjson.h

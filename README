@@ -1,0 +1,80 @@
+ivjson - input validating JSON parser for C
+
+-- At the moment ivjson is just a stub, an unfinished project --
+
+A common cause of problems with JSON is caused by its dynamic nature,
+which gives extensibility and flexibility. However, when a field that
+was assumed to be there, is not there, or the field contains a value
+of an unexpected type, the software could crash.
+
+Normally these cases can be handled individually by painstaking error
+handling, but often error handling is not done, or there are gaps in
+the completeness of error handling, leading to crashes or even
+vulnerabilities.
+
+The ivjson parser solves this problem by
+
+ 1) making sure error handling is always done;
+ 2) localizes error handling to just one place.
+
+The ivjson parser will not care about the data that was not asked for,
+even though such data would be in the file, i.e. it is totally fine to
+add fields to JSON. As a bonus, in theory ivjson performs better than
+some other parsers, because it needs to concern itself only with the
+data that is asked for.
+
+The ivjson parser does not use the JSON schema standard because in
+author's opinion that fights with the KISS principle i.e. effort vs
+benefit balance is not good.
+
+Example
+=======
+
+struct ivjson_spec	 spec = { 0 };
+ivjson_array_t		 h_users;
+ivjson_number_t		 h_id;
+ivjson_string_t		 h_name;
+static const char	*json = "{ \"users\" : ["
+			 	"{ \"id\" : 3, \"name\" : \"foo\" }"
+			 	"{ \"id\" : 4, \"name\" : \"bar\" }"
+			 	"] }";
+int			 ret, i;
+int			 id;
+char			 name[40 + 1];
+
+/*
+ * These can fail, but if they do, it is not a runtime error,
+ * but a programmer error -- i.e. assert will fail.
+ */
+h_users = ivjson_add_array(&spec, "/users", 1, -1);
+h_id = ivjson_add_number_to_array(&spec, h_users, "id", 0, 1000);
+h_name = ivjson_add_string_to_array(&spec, h_users, "name", 1, 40);
+
+/*
+ * This can fail because of many reasons. Error code is given,
+ * which can be translated to text by ivjson_error().
+ */
+if ((ret = ivjson_parse(json, &spec)) != 0)
+	errx(1, "ivjson_parse: %s", ivjson_error(ret));
+
+/*
+ * These cannot fail.
+ */
+while ((i = ivjson_array(h_users)) != 0) {
+	id = ivjson_number_from_array(h_users, i, h_id);
+	strcpy(name, ivjson_string_from_array(h_users, i, h_name));
+	printf("id=%d name: %s\n", id, name);
+}
+
+Configure & Install
+===================
+
+./configure ~
+make install
+
+See also
+========
+
+https://github.com/tleino/jsonkv/
+https://github.com/tleino/dhdb/
+
